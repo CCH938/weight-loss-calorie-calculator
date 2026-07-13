@@ -1,0 +1,323 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#4CAF50">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="减肥热量计算器">
+  <meta name="description" content="科学减肥热量计算器 - BMR计算、AI拍照识别、饮食记录、体重追踪">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>减肥热量计算器</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="header">
+    <button class="theme-toggle" id="themeToggle" title="切换深色模式">🌙</button>
+    <h1>🔥 减肥热量计算器</h1>
+    <button class="settings-btn" id="settingsBtn" title="设置">⚙️</button>
+  </header>
+
+  <nav class="tab-bar">
+    <button class="tab active" data-tab="calculator">
+      <span class="tab-icon">🧮</span><span class="tab-label">计算器</span>
+    </button>
+    <button class="tab" data-tab="diary">
+      <span class="tab-icon">🍽️</span><span class="tab-label">饮食记录</span>
+    </button>
+    <button class="tab" data-tab="tracker">
+      <span class="tab-icon">📊</span><span class="tab-label">体重追踪</span>
+    </button>
+    <button class="tab" data-tab="agent">
+      <span class="tab-icon">🤖</span><span class="tab-label">AI助手</span>
+    </button>
+  </nav>
+  <main id="tab-calculator" class="tab-content active">
+    <section class="card">
+      <h2>📋 个人信息</h2>
+      <div class="form-group">
+        <label>性别</label>
+        <div class="radio-group">
+          <label class="radio-btn"><input type="radio" name="gender" value="male" checked> 男</label>
+          <label class="radio-btn"><input type="radio" name="gender" value="female"> 女</label>
+        </div>
+      </div>
+      <div class="form-group"><label for="age">年龄（岁）</label><input type="number" id="age" min="10" max="120" value="30"></div>
+      <div class="form-group"><label for="height">身高（cm）</label><input type="number" id="height" min="100" max="250" value="170"></div>
+      <div class="form-group"><label for="weight">当前体重（kg）</label><input type="number" id="weight" min="30" max="300" value="70" step="0.1"></div>
+      <div class="form-group"><label for="goalWeight">目标体重（kg）</label><input type="number" id="goalWeight" min="30" max="300" value="65" step="0.1"></div>
+      <div class="form-group"><label for="activity">活动水平</label>
+        <select id="activity">
+          <option value="1.2">久坐不动</option><option value="1.375" selected>轻度活动</option>
+          <option value="1.55">中度活动</option><option value="1.725">积极活动</option><option value="1.9">高强度活动</option>
+        </select>
+      </div>
+      <div class="form-group"><label for="goal">减肥速度</label>
+        <select id="goal">
+          <option value="250">温和减重（-0.25kg/周）</option><option value="500" selected>标准减重（-0.5kg/周）</option>
+          <option value="750">快速减重（-0.75kg/周）</option><option value="1000">激进减重（-1.0kg/周）</option>
+        </select>
+      </div>
+    </section>
+    <section class="card result-card" id="resultCard" style="display:none;">
+      <h2>📈 计算结果</h2>
+      <div class="result-grid">
+        <div class="result-item"><span class="result-label">基础代谢 (BMR)</span><span class="result-value" id="bmrValue">--</span><span class="result-unit">kcal/天</span></div>
+        <div class="result-item"><span class="result-label">每日消耗 (TDEE)</span><span class="result-value" id="tdeeValue">--</span><span class="result-unit">kcal/天</span></div>
+        <div class="result-item highlight"><span class="result-label">🎯 建议摄入</span><span class="result-value" id="targetValue">--</span><span class="result-unit">kcal/天</span></div>
+        <div class="result-item"><span class="result-label">预计达成目标</span><span class="result-value" id="estDays">--</span><span class="result-unit">天</span></div>
+      </div>
+      <h3 style="margin-top:16px;">🥗 每日营养素建议</h3>
+      <div class="macro-grid">
+        <div class="macro-item">
+          <span class="macro-icon">🥩</span>
+          <span class="macro-name">蛋白质</span>
+          <span class="macro-value"><span id="proteinGram">--</span><span class="macro-unit">g</span></span>
+          <div class="macro-bar"><div class="macro-fill protein" id="proteinBar" style="width:35%"></div></div>
+        </div>
+        <div class="macro-item">
+          <span class="macro-icon">🍚</span>
+          <span class="macro-name">碳水</span>
+          <span class="macro-value"><span id="carbsGram">--</span><span class="macro-unit">g</span></span>
+          <div class="macro-bar"><div class="macro-fill carbs" id="carbsBar" style="width:45%"></div></div>
+        </div>
+        <div class="macro-item">
+          <span class="macro-icon">🥑</span>
+          <span class="macro-name">脂肪</span>
+          <span class="macro-value"><span id="fatGram">--</span><span class="macro-unit">g</span></span>
+          <div class="macro-bar"><div class="macro-fill fat" id="fatBar" style="width:20%"></div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <main id="tab-diary" class="tab-content">
+    <section class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <button class="date-nav-btn" id="datePrev">◀</button>
+        <h2 style="margin:0;font-size:17px;" id="diaryDateTitle">📅 今日饮食</h2>
+        <button class="date-nav-btn" id="dateNext">▶</button>
+      </div>
+      <div class="progress-ring-wrap">
+        <div class="progress-ring">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle class="progress-ring-bg" cx="45" cy="45" r="38"/>
+            <circle class="progress-ring-fill" id="progressRing" cx="45" cy="45" r="38" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+          </svg>
+          <div class="progress-ring-text"><span class="ring-percent" id="ringPercent">0%</span><span class="ring-label" id="ringLabel">已摄入</span></div>
+        </div>
+      </div>
+      <div class="diary-summary">
+        <div class="diary-stat"><span class="diary-num" id="todayCalories">0</span><span class="diary-label">已摄入 (kcal)</span></div>
+        <div class="diary-stat"><span class="diary-num" id="todayRemaining">--</span><span class="diary-label">剩余 (kcal)</span></div>
+      </div>
+      <div class="net-cal" id="netCalDisplay" style="display:none;"></div>
+      <div class="actual-macros" id="actualMacros">
+        <div class="actual-macro-item"><span class="actual-macro-value" id="actProtein">0</span><span class="actual-macro-label">蛋白质 g</span><span class="actual-macro-target" id="targetProtein">/ --</span></div>
+        <div class="actual-macro-item"><span class="actual-macro-value" id="actCarbs">0</span><span class="actual-macro-label">碳水 g</span><span class="actual-macro-target" id="targetCarbs">/ --</span></div>
+        <div class="actual-macro-item"><span class="actual-macro-value" id="actFat">0</span><span class="actual-macro-label">脂肪 g</span><span class="actual-macro-target" id="targetFat">/ --</span></div>
+      </div>
+    </section>
+
+    <section class="card camera-card">
+      <h2>📸 AI 拍照识别</h2>
+      <p class="camera-hint">拍照自动识别食物并估算热量</p>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+      <div class="camera-preview" id="cameraPreview" style="display:none;"><img id="previewImg" src="" alt="食物照片"><button class="btn btn-sm btn-outline" id="retakeBtn">🔄 重拍</button></div>
+      <div class="camera-actions" id="cameraActions"><button class="btn btn-camera" id="captureBtn"><span class="camera-icon">📷</span><span>拍照识别食物</span></button></div>
+      <div class="analyze-result" id="analyzeResult" style="display:none;">
+        <div class="analyze-loading" id="analyzeLoading" style="display:none;"><div class="spinner"></div><p>AI 正在分析食物...</p></div>
+        <div class="analyze-data" id="analyzeData" style="display:none;"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>➕ 添加食物</h2>
+      <div class="meal-type-select" id="mealTypeSelect">
+        <div class="meal-type-chip selected" data-meal="breakfast">🌅 早餐</div>
+        <div class="meal-type-chip" data-meal="lunch">☀️ 午餐</div>
+        <div class="meal-type-chip" data-meal="dinner">🌙 晚餐</div>
+        <div class="meal-type-chip" data-meal="snack">🍪 加餐</div>
+      </div>
+      <div class="frequent-foods" id="frequentFoods" style="display:none;"></div>
+      <div class="form-group"><label for="foodSearch">搜索食物</label><input type="text" id="foodSearch" placeholder="输入食物名称搜索..."><div class="food-suggestions" id="foodSuggestions"></div></div>
+      <div class="form-group"><label for="foodAmount">份量（g）</label><input type="number" id="foodAmount" value="100" min="1" max="5000"></div></div>
+      <button class="btn btn-primary" id="addFoodBtn">添加到记录</button>
+      </section>
+
+    <section class="card exercise-card">
+      <div class="collapse-toggle" id="exerciseToggle">🏃 运动消耗 <span class="arrow">▶</span></div>
+      <div class="collapse-body" id="exerciseBody">
+        <div class="exercise-search-wrap"><input type="text" id="exerciseSearch" class="exercise-search-input" placeholder="搜索运动类型..."><div class="exercise-suggestions" id="exerciseSuggestions"></div></div>
+        <div class="exercise-input-row">
+          <div class="form-group" style="flex:2;"><label for="exerciseDuration">时长（分钟）</label><input type="number" id="exerciseDuration" value="30" min="1" max="600"></div>
+          <button class="btn btn-primary" style="flex:1;padding:13px 8px;align-self:flex-end;" id="addExerciseBtn">添加</button>
+        </div>
+        <ul class="exercise-list" id="exerciseList"></ul>
+      </div>
+    </section>
+
+    <section class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="margin:0;" id="foodListTitle">📋 今日食物列表</h2>
+        <button class="history-toggle-btn" id="historyToggleBtn">📅 历史</button>
+      </div>
+      <ul class="food-list" id="foodList"><li class="food-empty">还没有记录食物，开始添加吧！</li></ul>
+    </section>
+
+    <section class="card" id="historyCard" style="display:none;">
+      <h2>📊 饮食历史</h2>
+      <div class="history-summary" id="historySummary"></div>
+      <div class="calorie-chart-container"><canvas id="calorieTrendChart"></canvas></div>
+      <div class="report-meal-breakdown" id="reportMeals"></div>
+      </div>
+      <ul class="history-list" id="historyList"></ul>
+    </section>
+  </main>
+
+  <main id="tab-tracker" class="tab-content">
+    <section class="card">
+      <h2>⚖️ 记录体重</h2>
+      <div class="form-group"><label for="logWeight">今日体重（kg）</label><input type="number" id="logWeight" min="30" max="300" step="0.1" placeholder="请输入体重"></div>
+      <div class="form-group"><label for="logDate">日期</label><input type="date" id="logDate"></div>
+      <button class="btn btn-primary" id="logWeightBtn">记录体重</button>
+    </section>
+    <section class="card">
+      <h2>📈 体重趋势</h2>
+      <div class="chart-container"><canvas id="weightChart"></canvas></div>
+      <div class="weight-stats" id="weightStats" style="display:none;">
+        <div class="stat-row"><span>起始体重：</span><strong id="statStart">-- kg</strong></div>
+        <div class="stat-row"><span>当前体重：</span><strong id="statCurrent">-- kg</strong></div>
+        <div class="stat-row"><span>已减重：</span><strong id="statLost">-- kg</strong></div>
+        <div class="stat-row"><span>距离目标：</span><strong id="statRemain">-- kg</strong></div>
+      </div>
+      </section>
+    <section class="card">
+      <h2>📝 体重历史</h2>
+      <ul class="weight-history" id="weightHistory"><li class="food-empty">还没有记录体重数据</li></ul>
+    </section>
+  </main>
+
+    <main id="tab-agent" class="tab-content">
+    <div class="chat-container" id="chatContainer">
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-bubble bot">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-content">
+            <p>你好！我是你的AI减肥助手。我能帮你：</p>
+            <ul style="margin:6px 0;padding-left:18px;font-size:13px;">
+              <li>📝 记录饮食：告诉我吃了什么</li>
+              <li>🏃 记录运动：告诉我做了什么运动</li>
+              <li>💡 饮食建议：根据剩余热量推荐</li>
+              <li>📊 分析进展：查看减重趋势</li>
+              <li>⚖️ 记录体重：告诉我今天的体重</li>
+            </ul>
+            <p>试试说：<em>"我吃了一个苹果"</em></p>
+          </div>
+        </div>
+      </div>
+      <div class="chat-quick-actions" id="chatQuickActions">
+        <button class="chat-chip" data-msg="今天还能吃多少">今天还能吃多少</button>
+        <button class="chat-chip" data-msg="推荐晚餐吃什么">推荐晚餐吃什么</button>
+        <button class="chat-chip" data-msg="我最近减得怎么样">我最近减得怎么样</button>
+        <button class="chat-chip" data-msg="一个苹果多少热量">一个苹果多少热量</button>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="输入你想做的事..." autocomplete="off">
+        <button class="chat-send-btn" id="chatSendBtn">发送</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="settingsModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header"><h2>⚙️ 设置</h2><button class="modal-close" id="closeSettings">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="apiKey">智谱AI API Key</label>
+          <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off">
+          <p class="form-hint">用于 AI 拍照识别食物热量。密钥仅保存在本地浏览器中。<br><a href="https://open.bigmodel.cn/usercenter/apikeys" target="_blank" rel="noopener">获取智谱AI Key →</a></p>
+        </div>
+        <div class="form-group">
+          <label for="apiEndpoint">API 地址（可选）</label>
+          <input type="text" id="apiEndpoint" placeholder="https://api.deepseek.com/v1" value="https://open.bigmodel.cn/api/paas/v4">
+          <p class="form-hint">智谱AI GLM-4V：免费额度、支持图片识别。</p>
+        </div>
+        <div class="form-group">
+          <label for="modelSelect">模型</label>
+          <select id="modelSelect">
+            <optgroup label="OpenAI（支持图片识别）">
+              <option value="gpt-4o-mini">gpt-4o-mini（便宜+视觉）</option>
+              <option value="gpt-4o">gpt-4o（更精准）</option>
+              <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+            </optgroup>
+            <optgroup label="DeepSeek（纯文本，不支持图片）"><option value="deepseek-chat">deepseek-chat</option></optgroup>
+            <optgroup label="硅基流动 SiliconFlow（支持图片识别）">
+              <option value="Pro/Qwen/Qwen2.5-VL-72B-Instruct">Qwen2.5-VL-72B（免费额度）</option>
+              <option value="Pro/Qwen/Qwen2-VL-72B-Instruct">Qwen2-VL-72B</option>
+              <option value="Pro/glm-4v-9b">GLM-4V-9B（智谱视觉）</option>
+              <option value="deepseek-ai/deepseek-vl2">DeepSeek-VL2（视觉版）</option>
+              <option value="Pro/Qwen/Qwen2.5-VL-7B-Instruct">Qwen2.5-VL-7B（轻量）</option>
+            </optgroup>
+            <optgroup label="智谱AI（支持图片识别）">
+              <option value="glm-4v-flash" selected>glm-4v-flash（免费，推荐）</option>
+              <option value="glm-4v-plus">glm-4v-plus（更精准）</option>
+            </optgroup>
+            <optgroup label="通义千问（支持图片识别）">
+              <option value="qwen-vl-max">qwen-vl-max</option>
+              <option value="qwen-vl-plus">qwen-vl-plus（便宜）</option>
+              <option value="qwen2.5-vl-72b-instruct">qwen2.5-vl-72b</option>
+            </optgroup>
+            <optgroup label="Google Gemini（支持图片识别）">
+              <option value="gemini-2.0-flash">gemini-2.0-flash（推荐）</option>
+              <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+            </optgroup>
+            <optgroup label="Moonshot / Kimi（支持图片识别）"><option value="moonshot-v1-8k-vision-preview">moonshot-v1-8k-vision</option></optgroup>
+            <optgroup label="阶跃星辰 StepFun（支持图片识别）">
+              <option value="step-1v-8k">step-1v-8k</option>
+              <option value="step-1.5v-mini">step-1.5v-mini</option>
+            </optgroup>
+            <optgroup label="豆包 / 火山引擎（支持图片识别）"><option value="doubao-vision-pro-32k">doubao-vision-pro-32k</option></optgroup>
+            <optgroup label="Claude（需中转）">
+              <option value="claude-3-5-sonnet">claude-3-5-sonnet</option>
+              <option value="claude-3-opus">claude-3-opus</option>
+            </optgroup>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="saveSettings">💾 保存设置</button>
+        <p class="form-status" id="settingsStatus"></p>
+
+        
+          
+        </div>
+
+        <input type="file" id="importFileInput" accept=".json" style="display:none;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/calculator.js"></script>
+  <script src="js/food-db.js"></script>
+  <script src="js/tracker.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/agent.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
